@@ -42,7 +42,6 @@
     <name>hadoop.proxyuser.httpfs.groups</name>
     <value>*</value>
   </property>
-
   <!-- Llama proxy user setting -->
   <property>
     <name>hadoop.proxyuser.llama.hosts</name>

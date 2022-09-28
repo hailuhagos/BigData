@@ -105,7 +105,6 @@
     <name>dfs.namenode.secondary.https-address</name>
     <value>0.0.0.0:50495</value>
   </property>
-
   <!-- Impala configuration -->
   <property>
     <name>dfs.datanode.hdfs-blocks-metadata.enabled</name>

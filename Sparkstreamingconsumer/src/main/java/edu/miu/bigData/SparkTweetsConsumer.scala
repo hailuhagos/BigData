@@ -16,13 +16,13 @@ import org.apache.spark.sql.SaveMode
 
 object SparkTweetsConsumer {
  
-  /** Our main function where the action happens */
   def main(args: Array[String]) {
     
-    //Logger
     Logger.getRootLogger().setLevel(Level.WARN) 
     
-    val confi = new SparkConf().setAppName("PrintTweets").setMaster("local[*]")
+    val confi = new SparkConf()
+    .setAppName("Tweets Consumer")
+    .setMaster("local[*]")
     
     val sc = new SparkContext(confi)
     
@@ -35,23 +35,24 @@ object SparkTweetsConsumer {
     .map(splt=>(splt(0).toLong,splt(1),splt(2).toInt,splt(3),splt(4).toInt,splt(5),splt(6).toInt,splt(7).toBoolean,splt(8).toBoolean,splt(9).toBoolean,splt(10),splt(11)))
     
     tweets.foreachRDD((rdd,time)=>{         
-      val spark = SparkSession.builder().appName("Spark Tweet Hive").master("local[*]")
+      val sparksession = SparkSession
+      .builder()
+      .appName("Spark with Hive")
+      .master("local[*]")
       .config("hive.metastore.warehouse.uris","thrift://localhost:9083") 
       .enableHiveSupport() .getOrCreate()
  
-      import spark.implicits._
-      import spark.sql
+      import sparksession.implicits._
+      import sparksession.sql
       
       val tweetrepartitioned = rdd.repartition(1).cache()
-      //spark.sqlContext.sql("CREATE TABLE IF NOT EXISTS tweets_record (userId BIGINT, lang STRING, friendsCount INT, Location STRING,followersCount INT, deviceUsed STRING, retweetCount INT, isSensitive BOOLEAN, isRetweet BOOLEAN, isRetweeted BOOLEAN, postDate STRING,text STRING)")
       val tweetDataFrame = tweetrepartitioned.map(twt => Record(twt._1, twt._2,twt._3, twt._4,twt._5, twt._6,twt._7, twt._8,twt._9, twt._10,twt._11, twt._12)).toDF()
-      //spark.sqlContext.sql("create table tweets_record as select * from tweettable")
-      val sqlContext1 = new HiveContext(spark.sparkContext)
+      val sqlContext1 = new HiveContext(sparksession.sparkContext)
       import sqlContext1.implicits._
       tweetDataFrame.write.mode(SaveMode.Append).saveAsTable("tweets_record")
      
       tweetDataFrame.createOrReplaceTempView("tweettable")
-      val tables = spark.sqlContext.sql("select * from tweettable")
+      val tables = sparksession.sqlContext.sql("select * from tweettable")
       println(s"========= $time =========")
       tables.show()
     })
